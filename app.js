@@ -1,119 +1,77 @@
-// frontend/app.js
+// API URL ya public backend yawe kuri Render
+const API_URL = "https://lumiereduprogres-backend-4.onrender.com";
 
-// ======================
-// Lumière Du Progrès API
-// ======================
-
-// Backend URL yawe kuri Render
-const API_URL = "https://lumiere-du-progres-backend-4.onrender.com";
-
-// Elements muri HTML
-const createUserBtn = document.getElementById("create-user-btn");
-const newUsernameInput = document.getElementById("new-username");
+// Fungura elements za HTML
+const createUserForm = document.getElementById("create-user-form");
+const usernameInput = document.getElementById("username");
 const usersList = document.getElementById("users-list");
-const transactionUsernameInput = document.getElementById("transaction-username");
-const transactionAmountInput = document.getElementById("transaction-amount");
-const depositBtn = document.getElementById("deposit-btn");
-const withdrawBtn = document.getElementById("withdraw-btn");
-const messageDiv = document.getElementById("message");
 
-// Helper: Erekana ubutumwa bwa user
-function showMessage(msg) {
-  messageDiv.textContent = msg;
-  setTimeout(() => messageDiv.textContent = "", 3000);
-}
+const transactionForm = document.getElementById("transaction-form");
+const transUsernameInput = document.getElementById("trans-username");
+const amountInput = document.getElementById("amount");
 
-// Fetch users uko bari muri backend
-async function fetchUsers() {
-  try {
-    const res = await fetch(`${API_URL}/users`);
-    const data = await res.json();
-    usersList.innerHTML = "";
-    data.forEach(user => {
-      const li = document.createElement("li");
-      li.textContent = `${user.username} - Balance: ${user.balance}`;
-      usersList.appendChild(li);
-    });
-  } catch (err) {
-    console.error(err);
-    showMessage("Error fetching users");
-  }
-}
-
-// ========================
-// Create User
-// ========================
-createUserBtn.addEventListener("click", async () => {
-  const username = newUsernameInput.value.trim();
-  if (!username) return showMessage("Please enter a username");
+// Fungura user
+createUserForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = usernameInput.value.trim();
+  if (!username) return alert("Enter a username");
 
   try {
     const res = await fetch(`${API_URL}/create-user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username }),
     });
-    const user = await res.json();
-    showMessage(`User created: ${user.username}`);
-    newUsernameInput.value = "";
-    fetchUsers();
+    const data = await res.json();
+    alert(`User created: ${data.username}`);
+    usernameInput.value = "";
+    loadUsers();
   } catch (err) {
     console.error(err);
-    showMessage("Error creating user");
+    alert("Error creating user");
   }
 });
 
-// ========================
-// Deposit
-// ========================
-depositBtn.addEventListener("click", async () => {
-  const username = transactionUsernameInput.value.trim();
-  const amount = parseFloat(transactionAmountInput.value);
-  if (!username || isNaN(amount)) return showMessage("Enter valid username and amount");
+// Fungura transaction
+transactionForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = transUsernameInput.value.trim();
+  const amount = Number(amountInput.value);
+  if (!username || !amount) return alert("Enter username and amount");
 
   try {
-    const res = await fetch(`${API_URL}/deposit`, {
+    const res = await fetch(`${API_URL}/transaction`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, amount })
+      body: JSON.stringify({ username, amount }),
     });
-    const user = await res.json();
-    showMessage(`Deposited ${amount} to ${user.username}`);
-    transactionUsernameInput.value = "";
-    transactionAmountInput.value = "";
-    fetchUsers();
+    const data = await res.json();
+    alert(`Transaction done: ${data.username} new balance ${data.balance}`);
+    transUsernameInput.value = "";
+    amountInput.value = "";
+    loadUsers();
   } catch (err) {
     console.error(err);
-    showMessage("Error depositing");
+    alert("Error processing transaction");
   }
 });
 
-// ========================
-// Withdraw
-// ========================
-withdrawBtn.addEventListener("click", async () => {
-  const username = transactionUsernameInput.value.trim();
-  const amount = parseFloat(transactionAmountInput.value);
-  if (!username || isNaN(amount)) return showMessage("Enter valid username and amount");
-
+// Fungura function yo load users
+async function loadUsers() {
   try {
-    const res = await fetch(`${API_URL}/withdraw`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, amount })
+    const res = await fetch(`${API_URL}/users`);
+    const users = await res.json();
+    usersList.innerHTML = "";
+    users.forEach(u => {
+      const li = document.createElement("li");
+      li.textContent = `${u.username} - Balance: ${u.balance}`;
+      usersList.appendChild(li);
     });
-    const user = await res.json();
-    showMessage(`Withdrew ${amount} from ${user.username}`);
-    transactionUsernameInput.value = "";
-    transactionAmountInput.value = "";
-    fetchUsers();
   } catch (err) {
     console.error(err);
-    showMessage("Error withdrawing");
+    usersList.innerHTML = "<li>Error fetching users</li>";
   }
-});
+}
 
-// ========================
-// Load users initially
-// ========================
-fetchUsers();
+// Load users mu ntangiriro
+loadUsers();
