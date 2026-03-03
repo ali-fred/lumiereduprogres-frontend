@@ -1,34 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lumière Du Progrès</title>
-  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <h1>Lumière Du Progrès</h1>
 
-  <section id="create-user-section">
-    <h2>Create User</h2>
-    <input type="text" id="new-username" placeholder="Username">
-    <button id="create-user-btn">Create User</button>
-  </section>
+  <h2>Create User</h2>
+  <input id="username" placeholder="Username">
+  <button onclick="createUser()">Create User</button>
 
-  <section id="users-section">
-    <h2>Users</h2>
-    <ul id="users-list"></ul>
-  </section>
+  <h2>Users</h2>
+  <ul id="users"></ul>
 
-  <section id="transactions-section">
-    <h2>Deposit / Withdraw</h2>
-    <input type="text" id="transaction-username" placeholder="Username">
-    <input type="number" id="transaction-amount" placeholder="Amount">
-    <button id="deposit-btn">Deposit</button>
-    <button id="withdraw-btn">Withdraw</button>
-  </section>
-
-  <div id="message"></div>
+  <h2>Deposit / Withdraw</h2>
+  <input id="username2" placeholder="Username">
+  <input id="amount" placeholder="Amount">
+  <button onclick="deposit()">Deposit</button>
+  <button onclick="withdraw()">Withdraw</button>
 
   <script src="app.js"></script>
 </body>
