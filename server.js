@@ -1,72 +1,75 @@
 import express from "express";
 import cors from "cors";
-import bodyParser from "body-parser";
-import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
+import { Low } from "lowdb";
+import { JSONFile } from "lowdb/node";
+import { nanoid } from "nanoid";
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-const DATABASE_FILE = "./database.json";
+const port = process.env.PORT || 10000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Functions zo gusoma no kwandika database
-function readDatabase() {
-  try {
-    const data = fs.readFileSync(DATABASE_FILE, "utf8");
-    return JSON.parse(data);
-  } catch {
-    return { users: [] };
-  }
-}
+// Setup database
+const adapter = new JSONFile("db.json");
+const db = new Low(adapter);
 
-function writeDatabase(data) {
-  fs.writeFileSync(DATABASE_FILE, JSON.stringify(data, null, 2));
-}
+// Init DB
+await db.read();
+db.data ||= { users: [] };
+await db.write();
 
 // Routes
 app.get("/", (req, res) => {
   res.send("🚀 Lumière Du Progrès API irakora neza");
 });
 
-// Route yo kubona users
-app.get("/users", (req, res) => {
-  const db = readDatabase();
-  res.json(db.users);
+// Get users
+app.get("/users", async (req, res) => {
+  await db.read();
+  res.json(db.data.users);
 });
 
-// Route yo gukora user nshya
-app.post("/create-user", (req, res) => {
+// Create user
+app.post("/users", async (req, res) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ error: "Username required" });
 
-  const db = readDatabase();
-  const newUser = { id: uuidv4(), username, balance: 0 };
-  db.users.push(newUser);
-  writeDatabase(db);
+  const newUser = { id: nanoid(), username, balance: 0 };
+  db.data.users.push(newUser);
+  await db.write();
   res.json(newUser);
 });
 
-// Route yo gukora dépôt / retrait
-app.post("/transaction", (req, res) => {
+// Deposit
+app.post("/deposit", async (req, res) => {
   const { username, amount } = req.body;
-  if (!username || typeof amount !== "number") {
-    return res.status(400).json({ error: "Username and amount required" });
-  }
-
-  const db = readDatabase();
-  const user = db.users.find(u => u.username === username);
+  await db.read();
+  const user = db.data.users.find(u => u.username === username);
   if (!user) return res.status(404).json({ error: "User not found" });
+  if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: "Invalid amount" });
 
-  user.balance += amount;
-  writeDatabase(db);
+  user.balance += Number(amount);
+  await db.write();
+  res.json(user);
+});
 
-  res.json({ username: user.username, balance: user.balance });
+// Withdraw
+app.post("/withdraw", async (req, res) => {
+  const { username, amount } = req.body;
+  await db.read();
+  const user = db.data.users.find(u => u.username === username);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: "Invalid amount" });
+  if (user.balance < amount) return res.status(400).json({ error: "Insufficient balance" });
+
+  user.balance -= Number(amount);
+  await db.write();
+  res.json(user);
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
 });
